@@ -1,0 +1,7 @@
+[
+	{
+		"method": "GET",
+		"path": "/test",
+		"lambda": "./lambda_test"
+	}
+]
