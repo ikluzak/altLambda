@@ -1,7 +1,7 @@
 QUICK START:
 
-	npm install		( get the dependencies ) 
-	node index.js		( run the thing ) 
+	npm install         ( get the dependencies ) 
+	node index.js       ( run the thing ) 
 
 	Should start listening on port 8000 or whatever you changed it to
 	
@@ -12,8 +12,9 @@ QUICK START:
 	See lambda run
 	run lambda run!
 
-
-
+    NOTE: 
+        altlambda.json  - is your configuration file...
+                          you will need a config section per api/lambda combo you want
 
 TODO NOTES/LOG: 
 
