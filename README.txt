@@ -1,3 +1,22 @@
+QUICK START:
+
+	npm install		( get the dependencies ) 
+	node index.js		( run the thing ) 
+
+	Should start listening on port 8000 or whatever you changed it to
+	
+	test by browsing to:
+
+		http://localhost:8000/test
+
+	See lambda run
+	run lambda run!
+
+
+
+
+TODO NOTES/LOG: 
+
 [*] - override console.log() 
 
 [*] - create log streams for each lambda... 

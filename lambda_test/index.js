@@ -15,11 +15,12 @@ async function handler(event) {
 
     // 
     // Fetch from a db
-    // var dbres = await db.get({ 
+    var dbres = undefined;
+    // dbres = await db.get({ 
     //     TableName: 'sometable',
     //     Key : { pk : 'foo' }
     // }).promise();
-
+    
 	const res = {
         statusCode : 200,
         headers: {
