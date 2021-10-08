@@ -2,7 +2,22 @@ QUICK START:
 
 	// From this npm module..
 	
-		-uh hang tight, still thinking about that
+		-uh hang tight, something like...
+
+			npm install altlambda --save-dev
+
+		add to package.json under scripts:
+
+			"altlambda" : "node node_modules/altlambda"
+
+		Copy the sample config file into current folder
+
+			cp node_modules/altlambda/altlambda.json ./
+
+		Configure your lambdas and run it...
+
+			npm run altlambda
+
 
 	// From github...
 
