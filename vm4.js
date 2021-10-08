@@ -1,15 +1,16 @@
-var uuid = require('uuid').v4;
-var Script = require('vm').Script;
-var createContext = require('vm').createContext;
-var fs = require('fs');
-var process = require('process');
+const uuid            = require('uuid').v4;
+const Script          = require('vm').Script;
+const createContext   = require('vm').createContext;
+const fs              = require('fs');
+const process         = require('process');
 
+const COLD_START_DELAY= 250;    // Default cold-start delay added in
+const _old = console;           // Save a reference to 'console'
 
-const COLD_START_DELAY = 250;
-
-
-const old = console;
-
+//
+// Function to override the console logs so we can have the lambda function
+// log out to a logfile instead...
+//
 function overrideLog(logname) {
 	console = {};
 	console.log = function (...args) {
@@ -25,57 +26,71 @@ function overrideLog(logname) {
 	}
 }
 
+//
+// Function to revert back again to the "real" console.log for the rest of our app to use... 
 function revertLog() {
-	console = old;
+	console = _old;
 }
 
+//
+//
+async function invokeLambda(lambda_name, context) {
 
-async function main(lambda_name, context) {
+    console.log(`\taltLambda()->START`);
 
-console.log(`\taltLambda()->START`);
+    // Create an execution context object to pass in to the vm
+    let contextObj = {
+        console,
+        require,
+        _context : context
+    };
+
+    const vmContext = createContext(contextObj);
+    const taskId = uuid();                                  // TODO: does this need to match the APIgw ID? 
+    overrideLog(lambda_name);                               // LOG OVERRIDE
+
+    //
+    // ------------------------------------------------------------------------------------
+    // LAMBDA LAND:
+
+    console.log(`START RequestId: ${taskId} Version: $LATEST`);
+    const start = Date.now();
+    const startMem = process.memoryUsage().rss;             // TODO: double-check this is the memory stat we want
+
+    // simulate some cold-start delay 
+    await new Promise(resolve => setTimeout(resolve, COLD_START_DELAY));
+
+    try {
+
+        const script = new Script(`
+            var lambda = require('./${lambda_name}/index.js');
+            lambda(_context);
+        `);
+
+        // Execute the lambda with the provide context
+        var out = script.runInContext(vmContext);
+
+    } catch (e) {
+        // On error, try to fail somewhat gracefully
+        console.log(e);
+        out = { statusCode: 500, body: e.toString() };
+    }
+
+    const endMem = process.memoryUsage().rss;
+    const end = Date.now();
+    const duration = end-start;
+    console.log(`REPORT RequestId: ${taskId}	Duration: ${duration} ms	Billed Duration: ${duration} ms	Memory Size: 'unlimited' MB	Max Memory Used: ${((endMem-startMem)/(1024*1024)).toPrecision(2)} MB`);
 
 
-let contextObj = {
-    console,
-    require,
-    _context : context
-};
+    // NOW LEAVING LAMBDA LAND:
+    // ------------------------------------------------------------------------------------
+    //
+    //
 
-const vmContext = createContext(contextObj);
-
-
-var taskId = uuid();
-overrideLog(lambda_name);
-console.log(`START RequestId: ${taskId} Version: $LATEST`);
-const start = Date.now();
-const startMem = process.memoryUsage().rss;
-
-//console.log(JSON.stringify(startMem, null, 2));
-
-await new Promise(resolve => setTimeout(resolve, COLD_START_DELAY));
-
-try {
-
-const script = new Script(`
-        var o = require('./${lambda_name}/index.js');
-        o(_context);
-`);
-var out = script.runInContext(vmContext);
-
-} catch (e) {
-	console.log(e);
-	out = { statusCode: 500, body: e.toString() };
-}
-
-const endMem = process.memoryUsage().rss;
-const end = Date.now();
-const duration = end-start;
-console.log(`REPORT RequestId: ${taskId}	Duration: ${duration} ms	Billed Duration: ${duration} ms	Memory Size: 'unlimited' MB	Max Memory Used: ${((endMem-startMem)/(1024*1024)).toPrecision(2)} MB`);
-revertLog();
-
-console.log(`\taltLambda()->END`);
+    revertLog();
+    console.log(`\taltLambda()->END`);
 
 	return out;
 }
 
-module.exports = main;
+module.exports = invokeLambda;
