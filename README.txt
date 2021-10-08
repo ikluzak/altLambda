@@ -1,7 +1,13 @@
 QUICK START:
 
-	npm install         ( get the dependencies ) 
-	node index.js       ( run the thing ) 
+	// From this npm module..
+	
+		-uh hang tight, still thinking about that
+
+	// From github...
+
+		npm install         ( get the dependencies ) 
+		node index.js       ( run the thing ) 
 
 	Should start listening on port 8000 or whatever you changed it to
 	
