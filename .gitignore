@@ -3,3 +3,4 @@ package-lock.json
 logs/*.log
 .npmrc
 cfg.js
+TODO.txt

@@ -11,6 +11,12 @@
       "method": "GET",
       "apipath": "/boilerplate",
       "lambda": "aws_boilerplate"
+    },
+    {
+      "method": "GET",
+      "apipath": "/bad",
+      "lambda" : "bad_lambda",
+      "timeout" : 5
     }
   ]
 }

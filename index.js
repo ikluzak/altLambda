@@ -18,6 +18,7 @@ const vm4           = require('./vm4.js');
 const uuid          = require('uuid').v4;
 const AWS           = require('aws-sdk');
 const path          = require('path');
+const chalk         = require('chalk');
 
 const app           = express();
 //
@@ -42,7 +43,7 @@ app.disable('x-powered-by');
 
 // By default we'll just handle OPTIONS for anything...
 app.options("/*", function(req, res, next) {
-    console.log(`API-gw(OPTIONS)`);
+    console.log(chalk.blue(`API-gw(OPTIONS)`));
     res.header('Access-Control-Allow-Origin', '*');
     res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
     res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Content-Length, X-Requested-With');
@@ -78,11 +79,12 @@ async function getTempCreds(profile) {
 //
 class APIgw {
 
-    constructor(lambda, method, apipath, filepath) {
+    constructor(lambda, method, apipath, filepath, timeout) {
         this.method     = method;
         this.path       = apipath;
         this.lambda     = lambda;
         this.fullpath   = filepath;
+        this.timeout    = timeout;
         this.self       = this;
     }
 
@@ -90,7 +92,7 @@ class APIgw {
     async functionHandler(req, res) {
 
         var that = this.self;
-        console.log(`API-gw(${that.method})->${that.lambda}`);
+        console.log(chalk.blue(`API-gw(${that.method})->${that.lambda}`));
 
         try {
 
@@ -153,7 +155,9 @@ class APIgw {
                 body : undefined,                           // TODO: support this? 
                 isBase64Encoded : false                     // TODO: support this
             },
-            that.fullpath);                                 // include the full path location
+            that.fullpath,                                  // include the full path location
+            that.timeout || 30                              // Maximum runtime in seconds... 
+            );
 
             //
             // Start sending back our results... 
@@ -187,7 +191,7 @@ function loadCfg(fname, app) {
         _cfg = fs.readFileSync(fname);
         _cfg = JSON.parse(_cfg.toString());
         if (typeof _cfg.lambdas === 'undefined') {
-            console.log(`altLambda->ERROR: no lambdas section in cfg file`);
+            console.log(chalk.red(`altLambda->ERROR: no lambdas section in cfg file`));
             process.exit();
         }
         cfg = _cfg.lambdas;
@@ -208,11 +212,12 @@ function loadCfg(fname, app) {
             console.log(`No cfg file found... writing base cfg`);
             fs.writeFileSync(fname, JSON.stringify(JSON.parse(CFG_BOILERPLATE), null, 2));
             console.log(`Sample config written to ${fname}`);
+            console.log(chalk.green(`Please setup your cfg and run altLambda again`));
             process.exit();
         }
 
-        console.log(`altLambda->ERROR: in configuration file`);
-        console.log(e);
+        console.log(chalk.red(`altLambda->ERROR: in configuration file`));
+        console.log(chalk.red(e));
     }
 
     //
@@ -220,27 +225,47 @@ function loadCfg(fname, app) {
     try {
 
         for (var i=0; i < cfg.length; i++) {
-            console.log(`\t--------------------------------------------`);
-            console.log(`\tmethod: `, cfg[i].method);
-            console.log(`\tpath:   `, cfg[i].apipath);
-            console.log(`\tlambda: `, cfg[i].lambda);
-
+            console.log(chalk.yellow(`\t--------------------------------------------`));
+            console.log(chalk.yellow(`\tmethod:    `, cfg[i].method));
+            console.log(chalk.yellow(`\tpath:      `, cfg[i].apipath));
+            console.log(chalk.yellow(`\tlambda:    `, cfg[i].lambda));
+            if (typeof cfg[i].timeout !== 'undefined') {
+                console.log(chalk.yellow(`\ttimeout:    ${cfg[i].timeout}`));
+            }
+            // Create a new APIgw object and map to route in express:
+            let use_path = path.join(_cfg.base_path, cfg[i].lambda);
+            console.log(chalk.yellow(`\tfull path:  ${use_path}`));                    
+            
             if (cfg[i].method === 'GET') {
-                // Create a new APIgw object and map to route in express:
-                let use_path = path.join(_cfg.base_path, cfg[i].lambda);
-                console.log(`\tfull path: ${use_path}`);                    
                 // The 'let' is crucial here:
-                let api = new APIgw(cfg[i].lambda, cfg[i].method, cfg[i].apipath, use_path);
-                app.get(cfg[i].apipath, (req, res) => { console.log(`${api.method} ${api.path} ${api.fullpath} ORG_PATH: ${req.originalUrl}`); api.functionHandler(req,res); } );
+                let api = new APIgw(cfg[i].lambda, cfg[i].method, cfg[i].apipath, use_path, cfg[i].timeout);
+                app.get(cfg[i].apipath, (req, res) => { /* console.log(`${api.method} ${api.path} ${api.fullpath} ORG_PATH: ${req.originalUrl}`); */ api.functionHandler(req,res); } );
 
             } else if (cfg[i].method === 'POST') {
                 console.log(`TODO: method '${cfg[i].method}' not supported by altLambda yet`);
+
+                // The 'let' is crucial here:
+                let api = new APIgw(cfg[i].lambda, cfg[i].method, cfg[i].apipath, use_path);
+                app.post(cfg[i].apipath, (req, res) => { /* console.log(`${api.method} ${api.path} ${api.fullpath} ORG_PATH: ${req.originalUrl}`); */ api.functionHandler(req,res); } );
+
             } else if (cfg[i].method === 'PUT') {
                 console.log(`TODO: method '${cfg[i].method}' not supported by altLambda yet`);
+
+                // The 'let' is crucial here:
+                let api = new APIgw(cfg[i].lambda, cfg[i].method, cfg[i].apipath, use_path);
+                app.put(cfg[i].apipath, (req, res) => { /* console.log(`${api.method} ${api.path} ${api.fullpath} ORG_PATH: ${req.originalUrl}`); */ api.functionHandler(req,res); } );
+
             } else if (cfg[i].method === 'PATCH') {
                 console.log(`TODO: method '${cfg[i].method}' not supported by altLambda yet`);
+
+                // The 'let' is crucial here:
+                let api = new APIgw(cfg[i].lambda, cfg[i].method, cfg[i].apipath, use_path);
+                app.patch(cfg[i].apipath, (req, res) => { /* console.log(`${api.method} ${api.path} ${api.fullpath} ORG_PATH: ${req.originalUrl}`); */ api.functionHandler(req,res); } );
             } else if (cfg[i].method === 'DELETE') {
                 console.log(`TODO: method '${cfg[i].method}' not supported by altLambda yet`);
+                // The 'let' is crucial here:
+                let api = new APIgw(cfg[i].lambda, cfg[i].method, cfg[i].apipath, use_path);
+                app.delete(cfg[i].apipath, (req, res) => { /* console.log(`${api.method} ${api.path} ${api.fullpath} ORG_PATH: ${req.originalUrl}`); */ api.functionHandler(req,res); } );
             } else {
                 console.log(`unsupported method: ${cfg[i].method}`);
                 process.exit();
@@ -250,8 +275,8 @@ function loadCfg(fname, app) {
         console.log(`\t--------------------------------------------`);
         
     } catch (e) {
-        console.log(`altLambda->ERROR: with configuration for: ${cfg[i].path}`);
-        console.log(e);
+        console.log(chalk.red(`altLambda->ERROR: with configuration for: ${cfg[i].path}`));
+        console.log(chalk.red(e));
     }
 }
 

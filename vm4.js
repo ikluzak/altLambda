@@ -34,7 +34,7 @@ function revertLog() {
 
 //
 //
-async function invokeLambda(lambda_name, context, use_path) {
+async function invokeLambda(lambda_name, context, use_path, timeout) {
 
     console.log(`\taltLambda()->START`);
 
@@ -45,8 +45,11 @@ async function invokeLambda(lambda_name, context, use_path) {
         _context : context
     };
 
-    const vmContext = createContext(contextObj);
-    const taskId = uuid();                                  // TODO: does this need to match the APIgw ID? 
+    let MAX_TIMEOUT = ((timeout * 1000) - COLD_START_DELAY);
+    
+    console.log(`\taltLambda()->max_timeout: ${MAX_TIMEOUT}`);
+    let vmContext = createContext(contextObj, { timeout : MAX_TIMEOUT });
+    let taskId = uuid();                                  // TODO: does this need to match the APIgw ID? 
     overrideLog(lambda_name);                               // LOG OVERRIDE
 
     //
@@ -64,11 +67,11 @@ async function invokeLambda(lambda_name, context, use_path) {
 
         const script = new Script(`
             var lambda = require('./${use_path}/index.js').handler;
-            lambda(_context);
+            (async () => { return await lambda(_context) })();
         `);
 
         // Execute the lambda with the provide context
-        var out = script.runInContext(vmContext);
+        var out = await script.runInContext(vmContext);
 
     } catch (e) {
         // On error, try to fail somewhat gracefully
