@@ -34,7 +34,7 @@ function revertLog() {
 
 //
 //
-async function invokeLambda(lambda_name, context) {
+async function invokeLambda(lambda_name, context, use_path) {
 
     console.log(`\taltLambda()->START`);
 
@@ -63,7 +63,7 @@ async function invokeLambda(lambda_name, context) {
     try {
 
         const script = new Script(`
-            var lambda = require('./${lambda_name}/index.js');
+            var lambda = require('./${use_path}/index.js').handler;
             lambda(_context);
         `);
 

@@ -17,6 +17,7 @@ const fs            = require('fs');
 const vm4           = require('./vm4.js');
 const uuid          = require('uuid').v4;
 const AWS           = require('aws-sdk');
+const path          = require('path');
 
 const app           = express();
 //
@@ -34,7 +35,7 @@ const AWS_PROFILE   = 'default';    // <------ SET THIS TO YOUR PREFERRED
 
 //
 // Default empty cfg:
-const CFG_BOILERPLATE=`{"port":8000,"base_path":"lambda_test","lambdas":[{"method":"GET","path":"/test","lambda":"test_lambda"},{"method":"GET","path":"/boilerplate","lambda":"aws_boilerplate"}]}`;
+const CFG_BOILERPLATE=`{"port":8000,"base_path":"lambda_test","lambdas":[{"method":"GET","apipath":"/test","lambda":"test_lambda"},{"method":"GET","apipath":"/boilerplate","lambda":"aws_boilerplate"}]}`;
 
 // Disable this information...
 app.disable('x-powered-by');
@@ -69,13 +70,20 @@ async function getTempCreds(profile) {
 
 //
 // Class to store our lambda specific configuration
+//
+//  lambda      = name of the lambda function ( generally the subdir of the lambda as well )
+//  method      = GET,POST,PUT,DELETE,PATCH
+//  apipath     = /your_route
+//  filepath    = ./full/lambda/dir/index.js
+//
 class APIgw {
 
-    constructor(lambda, method, path) {
-        this.method = method;
-        this.path   = path;
-        this.lambda = lambda;
-        this.self   = this;
+    constructor(lambda, method, apipath, filepath) {
+        this.method     = method;
+        this.path       = apipath;
+        this.lambda     = lambda;
+        this.fullpath   = filepath;
+        this.self       = this;
     }
 
     // Do the function execution step...
@@ -144,7 +152,8 @@ class APIgw {
                 },
                 body : undefined,                           // TODO: support this? 
                 isBase64Encoded : false                     // TODO: support this
-            });
+            },
+            that.fullpath);                                 // include the full path location
 
             //
             // Start sending back our results... 
@@ -171,16 +180,26 @@ function loadCfg(fname, app) {
 
     console.log(`API-gw()->loading configuration...`);
 
+    var cfg = undefined;
+    var _cfg = undefined;
+
     try {
-        var cfg = fs.readFileSync(fname);
-        cfg = JSON.parse(cfg.toString());	
+        _cfg = fs.readFileSync(fname);
+        _cfg = JSON.parse(_cfg.toString());
+        if (typeof _cfg.lambdas === 'undefined') {
+            console.log(`altLambda->ERROR: no lambdas section in cfg file`);
+            process.exit();
+        }
+        cfg = _cfg.lambdas;
+
     } catch (e) {
-	if (e.code === 'ENOENT') {
-		console.log(`No cfg file found... writing base cfg`);
-		fs.writeFileSync(fname, JSON.stringify(JSON.parse(CFG_BOILERPLATE), null, 2));
-		console.log(`Sample config written to ${fname}`);
-		process.exit();
-	}
+
+        if (e.code === 'ENOENT') {
+            console.log(`No cfg file found... writing base cfg`);
+            fs.writeFileSync(fname, JSON.stringify(JSON.parse(CFG_BOILERPLATE), null, 2));
+            console.log(`Sample config written to ${fname}`);
+            process.exit();
+        }
 
         console.log(`altLambda->ERROR: in configuration file`);
         console.log(e);
@@ -191,14 +210,18 @@ function loadCfg(fname, app) {
     try {
 
         for (var i=0; i < cfg.length; i++) {
+            console.log(`\t--------------------------------------------`);
             console.log(`\tmethod: `, cfg[i].method);
-            console.log(`\tpath:   `, cfg[i].path);
+            console.log(`\tpath:   `, cfg[i].apipath);
             console.log(`\tlambda: `, cfg[i].lambda);
 
             if (cfg[i].method === 'GET') {
                 // Create a new APIgw object and map to route in express:
-                var api = new APIgw(cfg[i].lambda, cfg[i].method, cfg[i].path);
-                app.get(cfg[i].path, (req, res) => { api.functionHandler(req,res); } );
+                let use_path = path.join(_cfg.base_path, cfg[i].lambda);
+                console.log(`\tfull path: ${use_path}`);                    
+                // The 'let' is crucial here:
+                let api = new APIgw(cfg[i].lambda, cfg[i].method, cfg[i].apipath, use_path);
+                app.get(cfg[i].apipath, (req, res) => { console.log(`${api.method} ${api.path} ${api.fullpath} ORG_PATH: ${req.originalUrl}`); api.functionHandler(req,res); } );
 
             } else if (cfg[i].method === 'POST') {
                 console.log(`TODO: method '${cfg[i].method}' not supported by altLambda yet`);
@@ -213,6 +236,9 @@ function loadCfg(fname, app) {
                 process.exit();
             }
         } // end for()
+
+        console.log(`\t--------------------------------------------`);
+        
     } catch (e) {
         console.log(`altLambda->ERROR: with configuration for: ${cfg[i].path}`);
         console.log(e);

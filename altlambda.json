@@ -4,12 +4,12 @@
   "lambdas": [
     {
       "method": "GET",
-      "path": "/test",
+      "apipath": "/test",
       "lambda": "test_lambda"
     },
     {
       "method": "GET",
-      "path": "/boilerplate",
+      "apipath": "/boilerplate",
       "lambda": "aws_boilerplate"
     }
   ]
