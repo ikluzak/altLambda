@@ -29,7 +29,12 @@ const AWS_PROFILE   = 'default';    // <------ SET THIS TO YOUR PREFERRED
 
 
 
+
 // ----------------------------------------------------------------------------------------------
+
+//
+// Default empty cfg:
+const CFG_BOILERPLATE=`{"port":8000,"base_path":"lambda_test","lambdas":[{"method":"GET","path":"/test","lambda":"test_lambda"},{"method":"GET","path":"/boilerplate","lambda":"aws_boilerplate"}]}`;
 
 // Disable this information...
 app.disable('x-powered-by');
@@ -170,6 +175,13 @@ function loadCfg(fname, app) {
         var cfg = fs.readFileSync(fname);
         cfg = JSON.parse(cfg.toString());	
     } catch (e) {
+	if (e.code === 'ENOENT') {
+		console.log(`No cfg file found... writing base cfg`);
+		fs.writeFileSync(fname, JSON.stringify(JSON.parse(CFG_BOILERPLATE), null, 2));
+		console.log(`Sample config written to ${fname}`);
+		process.exit();
+	}
+
         console.log(`altLambda->ERROR: in configuration file`);
         console.log(e);
     }

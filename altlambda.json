@@ -1,7 +1,16 @@
-[
-	{
-		"method": "GET",
-		"path": "/test",
-		"lambda": "./lambda_test"
-	}
-]
+{
+  "port": 8000,
+  "base_path": "lambda_test",
+  "lambdas": [
+    {
+      "method": "GET",
+      "path": "/test",
+      "lambda": "test_lambda"
+    },
+    {
+      "method": "GET",
+      "path": "/boilerplate",
+      "lambda": "aws_boilerplate"
+    }
+  ]
+}

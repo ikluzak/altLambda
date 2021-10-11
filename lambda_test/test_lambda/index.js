@@ -36,4 +36,4 @@ async function handler(event) {
 	return res;
 }
 
-module.exports=handler;
+exports.handler = handler;
