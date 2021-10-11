@@ -25,14 +25,14 @@
 	
 ### test by browsing to included test function:
 
-    http://localhost:8000/test
+http://localhost:8000/test
 
-	See lambda run
-	run lambda run!
+See lambda run
+run lambda run!
 
-    NOTE: 
-        altlambda.json  - is your configuration file...
-                          you will need a config section per api/lambda combo you want
+NOTE: 
+    altlambda.json  - is your configuration file...
+    you will need a config section per api/lambda combo you want
 
 
 ### TODO NOTES/LOG: 
