@@ -27,10 +27,10 @@
 
 http://localhost:8000/test
 
-See lambda run
-run lambda run!
+    See lambda run
+    run lambda run!
 
-NOTE: 
+**NOTE:** 
     altlambda.json  - is your configuration file...
     you will need a config section per api/lambda combo you want
 
