@@ -24,8 +24,8 @@ const app           = express();
 // ----------------------------------------------------------------------------------------------
 // CONFIGURATION:
 
-const port          = 8000;         // <------ SET THIS TO YOUR PREFERRED
-const AWS_PROFILE   = 'default';    // <------ SET THIS TO YOUR PREFERRED
+var port            = 8000;         // <------ SET THIS TO YOUR PREFERRED ( in the cfg file )
+var AWS_PROFILE     = 'default';    // <------ SET THIS TO YOUR PREFERRED ( in the cfg file ) 
 
 
 
@@ -192,6 +192,16 @@ function loadCfg(fname, app) {
         }
         cfg = _cfg.lambdas;
 
+        if (typeof _cfg.port !== 'undefined') {
+            port = _cfg.port;
+        }
+        console.log(`altLambda()->Using port: ${_cfg.port}`);
+        
+        if (typeof _cfg.aws_profile !== 'undefined') {
+            AWS_PROFILE = _cfg.aws_profile;
+        }
+        console.log(`altLambda()->Using AWS profile: ${AWS_PROFILE}`);
+        
     } catch (e) {
 
         if (e.code === 'ENOENT') {
