@@ -1,6 +1,9 @@
 # QUICK START
 
-* npm install altlambda --save-dev
+* Install the package
+```bash
+    npm install altlambda --save-dev
+````
 
 * Add to package.json under scripts:
 ```json
@@ -22,7 +25,7 @@
 	
 ### test by browsing to included test function:
 
-    [http://localhost:8000/test](http://localhost:8000/test)
+    http://localhost:8000/test
 
 	See lambda run
 	run lambda run!
