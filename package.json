@@ -1,6 +1,6 @@
 {
   "name": "altlambda",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -8,6 +8,10 @@
   },
   "author": "Ivan Kluzak",
   "license": "na",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ikluzak/altLambda.git"
+  },
   "dependencies": {
     "aws-sdk": "^2.1004.0",
     "express": "^4.17.1",
