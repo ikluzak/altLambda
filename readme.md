@@ -23,7 +23,7 @@
 
 * Should start listening on port 8000 or whatever you changed it to (in the index file currently, will be the altlambda.cfg in the near future)
 	
-### test by browsing to included test function:
+### Test by browsing to included test function:
 
 http://localhost:8000/test
 
