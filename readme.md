@@ -10,7 +10,7 @@
     "altlambda" : "node node_modules/altlambda"
 ```
 
-* Copy the sample config file into current folder
+* Copy the sample config file into current folder, or on first run it will create one
 ```bash
     cp node_modules/altlambda/altlambda.json ./
 ```
@@ -39,7 +39,7 @@ http://localhost:8000/test
 
 - [X] - override console.log() 
 - [X] - create log streams for each lambda... 
-- [ ] - Apart from the sandbox escapes, it was also possible to create a denial of service using infinite while loop
+- [ ] - Apart from the sandbox escapes, it was also possible to create a denial of service using infinite while loop, this makes a good case for the max duration check of some kind.   If you are worried about the sandbox stuff, don't host untrusted code.
 - [ ] - Set maxtimeout for the lambdas... and "freeze" them... or whatever...
 - [ ] - Because i'm not doing real VM's per se... I can't freeze/thaw them.. exactly like AWS...  consider alternatives.. potentially use Docker containers per lambda... 
 

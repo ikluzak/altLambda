@@ -11,7 +11,7 @@ async function handler(event) {
     
     //
     // Dump the environmental variables:
-    console.log(`ENV: `, JSON.stringify(process.env, null, 2));
+    // console.log(`ENV: `, JSON.stringify(process.env, null, 2));
 
     // 
     // Fetch from a db
